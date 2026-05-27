@@ -1,0 +1,6 @@
+{
+  "name": "Trust Nobody",
+  "description": "An interactive trap platformer game where nothing can be trusted, featuring real-time AI evil taunts on death.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
