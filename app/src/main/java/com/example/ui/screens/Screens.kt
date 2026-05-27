@@ -10,6 +10,10 @@ import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.lazy.grid.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -123,6 +127,7 @@ fun SplashScreen(viewModel: GameViewModel) {
 @Composable
 fun MainMenuScreen(viewModel: GameViewModel) {
     var showLevelSelect by remember { mutableStateOf(false) }
+    var showPrivacyPolicy by remember { mutableStateOf(false) }
     var currentRandomJoke by remember { mutableStateOf("Don't trust the floor.") }
     val jokesList = listOf(
         "Everything here is a lie.",
@@ -145,127 +150,155 @@ fun MainMenuScreen(viewModel: GameViewModel) {
         modifier = Modifier
             .fillMaxSize()
             .background(Color.Black)
-            .padding(16.dp),
+            .padding(24.dp),
         contentAlignment = Alignment.Center
     ) {
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
-            modifier = Modifier.widthIn(max = 500.dp)
+            modifier = Modifier.widthIn(max = 420.dp)
         ) {
             val infiniteTransition = rememberInfiniteTransition(label = "pulse")
             val scale by infiniteTransition.animateFloat(
                 initialValue = 0.95f,
                 targetValue = 1.05f,
                 animationSpec = infiniteRepeatable(
-                    animation = tween(1200, easing = LinearOutSlowInEasing),
+                    animation = tween(1250, easing = LinearOutSlowInEasing),
                     repeatMode = RepeatMode.Reverse
                 ),
                 label = "scale"
             )
 
-            // Genuine, glowing/pulsating "TRUST NOBODY" logo from reference
+            // Pulsating logo from resource
             androidx.compose.foundation.Image(
                 painter = androidx.compose.ui.res.painterResource(id = R.drawable.trust_nobody_logo),
                 contentDescription = "Trust Nobody Logo",
                 modifier = Modifier
-                    .size(190.dp)
+                    .size(200.dp)
                     .scale(scale)
-                    .padding(bottom = 4.dp)
+                    .padding(bottom = 8.dp)
             )
 
             Text(
                 text = currentRandomJoke,
                 color = WarningAmber,
-                fontSize = 16.sp,
+                fontSize = 15.sp,
                 fontStyle = FontStyle.Italic,
-                fontWeight = FontWeight.Medium,
+                fontWeight = FontWeight.Bold,
                 textAlign = TextAlign.Center,
-                modifier = Modifier.padding(vertical = 8.dp)
+                modifier = Modifier.padding(vertical = 12.dp)
             )
 
-            Spacer(modifier = Modifier.height(48.dp))
+            Spacer(modifier = Modifier.height(28.dp))
 
-            // Main menu buttons
+            // Main menu buttons - stacked with perfect symmetry and matching heights
             Button(
                 onClick = { viewModel.startGame() },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(64.dp)
+                    .height(58.dp)
                     .border(2.dp, CrimsonPrimary, RoundedCornerShape(12.dp)),
                 colors = ButtonDefaults.buttonColors(containerColor = CrimsonDark),
                 shape = RoundedCornerShape(12.dp)
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(Icons.Default.PlayArrow, contentDescription = "Play", tint = Color.White)
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text("PLAY GAME", fontSize = 20.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                    Icon(Icons.Default.PlayArrow, contentDescription = "Play icon", tint = Color.White)
+                    Spacer(modifier = Modifier.width(10.dp))
+                    Text("PLAY GAME", fontSize = 18.sp, fontWeight = FontWeight.Black, color = Color.White, letterSpacing = 1.sp)
                 }
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(12.dp))
+
+            Button(
+                onClick = { showLevelSelect = true },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(52.dp)
+                    .border(1.dp, Color.Gray.copy(alpha = 0.5f), RoundedCornerShape(10.dp)),
+                colors = ButtonDefaults.buttonColors(containerColor = ObsidianSurface),
+                shape = RoundedCornerShape(10.dp)
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(Icons.Default.List, contentDescription = "Levels icon", tint = NeonTeal)
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("CHOOSE LEVEL", fontSize = 15.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                }
+            }
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            Button(
+                onClick = { viewModel.screenState = ScreenState.LEADERBOARD },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(52.dp)
+                    .border(1.dp, Color.Gray.copy(alpha = 0.4f), RoundedCornerShape(10.dp)),
+                colors = ButtonDefaults.buttonColors(containerColor = ObsidianSurface),
+                shape = RoundedCornerShape(10.dp)
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(Icons.Default.Star, contentDescription = "Scores icon", tint = WarningAmber)
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("CHAMPIONS", fontSize = 15.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                }
+            }
+
+            Spacer(modifier = Modifier.height(12.dp))
 
             Row(modifier = Modifier.fillMaxWidth()) {
                 Button(
-                    onClick = { showLevelSelect = true },
+                    onClick = { viewModel.screenState = ScreenState.SETTINGS },
                     modifier = Modifier
                         .weight(1f)
-                        .height(56.dp)
-                        .border(1.dp, Color.Gray, RoundedCornerShape(8.dp)),
+                        .height(52.dp)
+                        .border(1.dp, Color.Gray.copy(alpha = 0.3f), RoundedCornerShape(10.dp)),
                     colors = ButtonDefaults.buttonColors(containerColor = ObsidianSurface),
-                    shape = RoundedCornerShape(8.dp)
+                    shape = RoundedCornerShape(10.dp)
                 ) {
-                    Text("LEVELS", fontSize = 15.sp, fontWeight = FontWeight.Medium)
+                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.Center) {
+                        Icon(Icons.Default.Settings, contentDescription = "Settings icon", tint = Color.LightGray, modifier = Modifier.size(18.dp))
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text("OPTIONS", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                    }
                 }
 
-                Spacer(modifier = Modifier.width(16.dp))
+                Spacer(modifier = Modifier.width(12.dp))
 
                 Button(
-                    onClick = { viewModel.screenState = ScreenState.LEADERBOARD },
+                    onClick = { showPrivacyPolicy = true },
                     modifier = Modifier
                         .weight(1f)
-                        .height(56.dp)
-                        .border(1.dp, Color.Gray, RoundedCornerShape(8.dp)),
+                        .height(52.dp)
+                        .border(1.dp, Color.Gray.copy(alpha = 0.3f), RoundedCornerShape(10.dp)),
                     colors = ButtonDefaults.buttonColors(containerColor = ObsidianSurface),
-                    shape = RoundedCornerShape(8.dp)
+                    shape = RoundedCornerShape(10.dp)
                 ) {
-                    Text("TOP SCORES", fontSize = 15.sp, fontWeight = FontWeight.Medium)
+                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.Center) {
+                        Icon(Icons.Default.Info, contentDescription = "Privacy icon", tint = Color.LightGray, modifier = Modifier.size(18.dp))
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text("PRIVACY", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                    }
                 }
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
-
-            Button(
-                onClick = { viewModel.screenState = ScreenState.SETTINGS },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(56.dp)
-                    .border(1.dp, Color.Gray, RoundedCornerShape(8.dp)),
-                colors = ButtonDefaults.buttonColors(containerColor = ObsidianSurface),
-                shape = RoundedCornerShape(8.dp)
-            ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(
-                        if (viewModel.isMuted) Icons.Default.VolumeOff else Icons.Default.VolumeUp,
-                        contentDescription = "Muted State"
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text("SETTINGS", fontSize = 16.sp)
-                }
-            }
-
-            Spacer(modifier = Modifier.height(48.dp))
+            Spacer(modifier = Modifier.height(36.dp))
 
             // Footer stats
             Text(
                 text = "Total Deaths: ${viewModel.deathCount} 💀",
                 color = Color.LightGray,
-                fontSize = 15.sp,
-                fontWeight = FontWeight.SemiBold
+                fontSize = 14.sp,
+                fontWeight = FontWeight.Bold,
+                letterSpacing = 0.5.sp
             )
         }
     }
 
+    // --- LEVEL SELECT DIALOG (LEVEL DEVIL SEQUENCE SELECTION GRID) ---
     if (showLevelSelect) {
+        val progressState by viewModel.userProgress.collectAsState()
+        val maxUnlockedLevel = progressState?.currentLevel ?: 1
+
         Dialog(onDismissRequest = { showLevelSelect = false }) {
             Card(
                 colors = CardDefaults.cardColors(containerColor = ObsidianSurface),
@@ -275,64 +308,138 @@ fun MainMenuScreen(viewModel: GameViewModel) {
                     .border(2.dp, CrimsonPrimary, RoundedCornerShape(16.dp)),
                 shape = RoundedCornerShape(16.dp)
             ) {
-                Column(modifier = Modifier.padding(16.dp)) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(16.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
                     Text(
-                        text = "CHOOSE YOUR PAIN",
+                        text = "SELECT LEVEL",
                         fontSize = 20.sp,
                         fontWeight = FontWeight.Black,
                         color = CrimsonPrimary,
-                        modifier = Modifier.fillMaxWidth(),
-                        textAlign = TextAlign.Center
+                        letterSpacing = 1.sp,
+                        modifier = Modifier.padding(bottom = 12.dp)
                     )
 
-                    Spacer(modifier = Modifier.height(12.dp))
+                    // 5-Column adaptive grid of Level squares
+                    LazyVerticalGrid(
+                        columns = GridCells.Fixed(5),
+                        modifier = Modifier.weight(1f),
+                        contentPadding = PaddingValues(4.dp),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        items((1..50).toList()) { idx ->
+                            val isUnlocked = idx <= maxUnlockedLevel
+                            val isCurrentPlaying = idx == viewModel.currentLevelIndex
 
-                    LazyColumn(modifier = Modifier.weight(1f)) {
-                        items(50) { index ->
-                            val idx = index + 1
-                            val levelInfo = LevelsDataSource.levels[idx - 1]
-                            var difficultyLabel = "Easy"
-                            var diffColor = NeonTeal
-                            if (idx > 10) { difficultyLabel = "Medium"; diffColor = WarningAmber }
-                            if (idx > 25) { difficultyLabel = "Hard"; diffColor = CrimsonPrimary }
-                            if (idx > 40) { difficultyLabel = "CRUEL"; diffColor = Color.Magenta }
-
-                            Row(
+                            Box(
                                 modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(vertical = 4.dp)
-                                    .background(Color.Black, RoundedCornerShape(8.dp))
-                                    .border(1.dp, Color.DarkGray, RoundedCornerShape(8.dp))
-                                    .clickable {
+                                    .aspectRatio(1f)
+                                    .clip(RoundedCornerShape(8.dp))
+                                    .background(
+                                        when {
+                                            isCurrentPlaying -> CrimsonPrimary
+                                            isUnlocked -> CrimsonDark.copy(alpha = 0.55f)
+                                            else -> Color.DarkGray.copy(alpha = 0.2f)
+                                        }
+                                    )
+                                    .border(
+                                        width = if (isCurrentPlaying) 2.dp else 1.dp,
+                                        color = when {
+                                            isCurrentPlaying -> Color.White
+                                            isUnlocked -> NeonTeal.copy(alpha = 0.6f)
+                                            else -> Color.DarkGray.copy(alpha = 0.3f)
+                                        },
+                                        shape = RoundedCornerShape(8.dp)
+                                    )
+                                    .clickable(enabled = isUnlocked) {
+                                        SoundManager.playGravityFlip() // Nice tactile feedback click
                                         showLevelSelect = false
                                         viewModel.skipToLevel(idx)
-                                    }
-                                    .padding(12.dp),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically
+                                    },
+                                contentAlignment = Alignment.Center
                             ) {
-                                Column {
-                                    Text("Level $idx: ${levelInfo.name}", color = Color.White, fontSize = 15.sp, fontWeight = FontWeight.Bold)
-                                    Text(levelInfo.description, color = Color.Gray, fontSize = 12.sp)
+                                if (isUnlocked) {
+                                    Text(
+                                        text = idx.toString(),
+                                        color = Color.White,
+                                        fontSize = 16.sp,
+                                        fontWeight = FontWeight.ExtraBold
+                                    )
+                                } else {
+                                    Icon(
+                                        imageVector = Icons.Default.Lock,
+                                        contentDescription = "Locked level icon",
+                                        tint = Color.Gray.copy(alpha = 0.6f),
+                                        modifier = Modifier.size(16.dp)
+                                    )
                                 }
-                                Text(
-                                    difficultyLabel,
-                                    color = diffColor,
-                                    fontWeight = FontWeight.Bold,
-                                    fontSize = 12.sp
-                                )
                             }
                         }
                     }
 
-                    Spacer(modifier = Modifier.height(12.dp))
+                    Spacer(modifier = Modifier.height(16.dp))
 
                     Button(
                         onClick = { showLevelSelect = false },
                         colors = ButtonDefaults.buttonColors(containerColor = CrimsonPrimary),
-                        modifier = Modifier.fillMaxWidth()
+                        shape = RoundedCornerShape(8.dp),
+                        modifier = Modifier.fillMaxWidth().height(48.dp)
                     ) {
-                        Text("CANCEL", color = Color.White, fontWeight = FontWeight.Bold)
+                        Text("CANCEL", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                    }
+                }
+            }
+        }
+    }
+
+    // --- COHESIVE PRIVACY POLICY DIALOG ---
+    if (showPrivacyPolicy) {
+        Dialog(onDismissRequest = { showPrivacyPolicy = false }) {
+            Card(
+                colors = CardDefaults.cardColors(containerColor = ObsidianSurface),
+                shape = RoundedCornerShape(16.dp),
+                modifier = Modifier
+                    .border(2.dp, NeonTeal, RoundedCornerShape(16.dp))
+                    .padding(4.dp)
+            ) {
+                Column(
+                    modifier = Modifier.padding(24.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Icon(Icons.Default.Info, contentDescription = "Privacy Shield", tint = NeonTeal, modifier = Modifier.size(32.dp))
+                    Spacer(modifier = Modifier.height(12.dp))
+                    Text(
+                        text = "OFFLINE PRIVACY PROTECTION",
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = NeonTeal,
+                        letterSpacing = 0.5.sp
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Text(
+                        text = "We are fully committed to absolute user privacy:\n\n" +
+                                "• All gameplay, logs, death statistics, and profile name registers are processed completely offline.\n" +
+                                "• Data is saved safely inside local SQLite storage on this device, away from remote servers.\n" +
+                                "• No background trackers, telemetry registers, or identifying coordinates are shared.\n" +
+                                "• Fully copper-clad COPPA & GDPR compliance guaranteed.\n\n" +
+                                "Enjoy this level-tragedy adventure with complete peace of mind!",
+                        fontSize = 12.sp,
+                        color = Color.LightGray,
+                        textAlign = TextAlign.Start,
+                        lineHeight = 17.sp
+                    )
+                    Spacer(modifier = Modifier.height(24.dp))
+                    Button(
+                        onClick = { showPrivacyPolicy = false },
+                        colors = ButtonDefaults.buttonColors(containerColor = NeonTeal),
+                        shape = RoundedCornerShape(8.dp),
+                        modifier = Modifier.fillMaxWidth().height(44.dp)
+                    ) {
+                        Text("I AGREE & CONFIRM", color = Color.Black, fontWeight = FontWeight.Bold, fontSize = 13.sp)
                     }
                 }
             }
@@ -363,16 +470,15 @@ fun GameLevelScreen(viewModel: GameViewModel) {
         val startOffsetX = (viewW.value - worldWPixels) / 2
         val startOffsetY = (viewH.value - worldHPixels) / 2 // PERFECT CENTERING!
 
-        // Physics game updates
+        // Physics game updates synced exactly with display VSYNC
         LaunchedEffect(Unit) {
-            var lastTime = System.currentTimeMillis()
+            var lastTime = System.nanoTime()
             while (true) {
-                val now = System.currentTimeMillis()
-                val dt = (now - lastTime) / 1000f
-                lastTime = now
-                // Bound max updates so we don't get huge jumps on slow frames
-                viewModel.updatePhysics(dt.coerceAtMost(0.05f))
-                delay(12) // Aim ~60fps checking
+                withFrameNanos { frameTimeNanos ->
+                    val dt = (frameTimeNanos - lastTime) / 1_000_000_000f
+                    lastTime = frameTimeNanos
+                    viewModel.updatePhysics(dt.coerceAtMost(0.04f))
+                }
             }
         }
 
@@ -381,7 +487,7 @@ fun GameLevelScreen(viewModel: GameViewModel) {
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .background(Color(0xFF070606))
+                    .background(Color(0xFFE2E5E9)) // Light Slate Grey Level Devil Background
             ) {
                 // Main game engine rendering space
                 Canvas(
@@ -406,39 +512,71 @@ fun GameLevelScreen(viewModel: GameViewModel) {
                         right = scopeOffsetX + worldWPixels * density,
                         bottom = scopeOffsetY + worldHPixels * density
                     ) {
-                        // Background Grid Aesthetic lines
-                        val bgBrush = Brush.linearGradient(
-                            colors = listOf(Color(0xFF0F0E0D), Color(0xFF030303))
-                        )
+                        // Light slate-gray retro background
+                        val stageColor = Color(0xFFE2E5E9)
                         drawRect(
-                            brush = bgBrush,
+                            color = stageColor,
                             topLeft = Offset(scopeOffsetX, scopeOffsetY),
                             size = Size(worldWPixels * density, worldHPixels * density)
                         )
+                        
+                        // Subtle grid lines for high detail retro aesthetic
+                        val gridLineColor = Color(0xFFECEFF3)
+                        val gridSpacing = 40f * pxScale
+                        // Draw Vertical lines
+                        var xGrid = scopeOffsetX
+                        while (xGrid < scopeOffsetX + worldWPixels * density) {
+                            drawLine(
+                                color = gridLineColor,
+                                start = Offset(xGrid, scopeOffsetY),
+                                end = Offset(xGrid, scopeOffsetY + worldHPixels * density),
+                                strokeWidth = 1f * density
+                            )
+                            xGrid += gridSpacing
+                        }
+                        // Draw Horizontal lines
+                        var yGrid = scopeOffsetY
+                        while (yGrid < scopeOffsetY + worldHPixels * density) {
+                            drawLine(
+                                color = gridLineColor,
+                                start = Offset(scopeOffsetX, yGrid),
+                                end = Offset(scopeOffsetX + worldWPixels * density, yGrid),
+                                strokeWidth = 1f * density
+                            )
+                            yGrid += gridSpacing
+                        }
 
                         // Draw level goal door portal
                         val portalX = scopeOffsetX + level.exitX * pxScale
                         val portalY = scopeOffsetY + level.exitY * pxScale
                         val portalW = 40f * pxScale
                         val portalH = 50f * pxScale
+                        
+                        // Door Frame
                         drawRect(
-                            color = NeonTeal,
+                            color = Color(0xFF1E2024),
                             topLeft = Offset(portalX, portalY),
-                            size = Size(portalW, portalH),
-                            style = androidx.compose.ui.graphics.drawscope.Stroke(width = 3f * density)
+                            size = Size(portalW, portalH)
                         )
+                        // Glowing green interior
                         drawRect(
-                            color = NeonTeal.copy(alpha = 0.25f),
-                            topLeft = Offset(portalX + 4f, portalY + 4f),
-                            size = Size(portalW - 8f, portalH - 8f)
+                            color = Color(0xFF388E3C),
+                            topLeft = Offset(portalX + 4f * density, portalY + 4f * density),
+                            size = Size(portalW - 8f * density, portalH - 8f * density)
+                        )
+                        // Inner green light
+                        drawRect(
+                            color = Color(0xFF4CAF50),
+                            topLeft = Offset(portalX + 8f * density, portalY + 8f * density),
+                            size = Size(portalW - 16f * density, portalH - 16f * density)
                         )
                         // Label exit door
                         drawContext.canvas.nativeCanvas.apply {
                             val paint = android.graphics.Paint().apply {
                                 color = android.graphics.Color.WHITE
+                                textAlign = android.graphics.Paint.Align.CENTER
                                 textSize = 11f * density
                                 isFakeBoldText = true
-                                textAlign = android.graphics.Paint.Align.CENTER
                             }
                             drawText("EXIT", portalX + portalW / 2, portalY - 6f * density, paint)
                         }
@@ -454,15 +592,15 @@ fun GameLevelScreen(viewModel: GameViewModel) {
                                 rotate(p.angle, pivot = Offset(x + w / 2, y + h / 2)) {
                                     // Custom visual designs based on platform types
                                     val platColor = when (p.type) {
-                                        TrapType.DISAPPEARING_FLOOR -> CrimsonDark.copy(alpha = (1f - p.progress * 2f).coerceIn(0.1f, 1f))
+                                        TrapType.DISAPPEARING_FLOOR -> Color(0xFFD32F2F).copy(alpha = (1f - p.progress * 2f).coerceIn(0.1f, 1f))
                                         TrapType.SPEED_FLOOR -> WarningAmber
                                         TrapType.SHRINKING_PLATFORM -> Color(0xFF7C3AED)
-                                        TrapType.FAKE_WALL -> Color.DarkGray
-                                        else -> ObsidianSurface
+                                        TrapType.FAKE_WALL -> Color.LightGray
+                                        else -> Color(0xFF1E2024)
                                     }
 
                                     // Outer borders glow
-                                    val borderStroke = if (p.type == TrapType.DISAPPEARING_FLOOR) CrimsonPrimary else Color.Gray
+                                    val borderStroke = if (p.type == TrapType.DISAPPEARING_FLOOR) Color(0xFFF44336) else Color(0xFF424242)
 
                                     drawRect(
                                         color = platColor,
@@ -479,7 +617,7 @@ fun GameLevelScreen(viewModel: GameViewModel) {
                                     // Special Warning symbols on tricky blocks
                                     if (p.type == TrapType.DISAPPEARING_FLOOR) {
                                         drawLine(
-                                            color = CrimsonPrimary,
+                                            color = Color(0xFFF44336),
                                             start = Offset(x, y),
                                             end = Offset(x + w, y + h),
                                             strokeWidth = 1f * density
@@ -498,7 +636,7 @@ fun GameLevelScreen(viewModel: GameViewModel) {
 
                             when (obj.type) {
                                 TrapType.SPIKES -> {
-                                    // Draw series of lethal sharp hazard triangles
+                                    // Spikes in Level Devil style - deep brick-red with crisp tips
                                     val numTriangles = (obj.width / 20f).toInt().coerceAtLeast(1)
                                     val triW = w / numTriangles
                                     for (i in 0 until numTriangles) {
@@ -509,7 +647,7 @@ fun GameLevelScreen(viewModel: GameViewModel) {
                                             lineTo(startX + triW, y + h)
                                             close()
                                         }
-                                        drawPath(path, color = CrimsonPrimary)
+                                        drawPath(path, color = Color(0xFFD32F2F))
                                     }
                                 }
                                 TrapType.LYING_BUTTON -> {
@@ -599,35 +737,35 @@ fun GameLevelScreen(viewModel: GameViewModel) {
                         rotate(charAngle, Offset(px + pw / 2, py + ph / 2)) {
                             // Draw yellow face block
                             drawRect(
-                                color = Color.Yellow,
+                                color = Color(0xFFFFEB3B),
                                 topLeft = Offset(px, py),
                                 size = Size(pw, ph)
                             )
                             drawRect(
-                                color = Color.Black,
+                                color = Color(0xFF1E2024),
                                 topLeft = Offset(px, py),
                                 size = Size(pw, ph),
-                                style = androidx.compose.ui.graphics.drawscope.Stroke(width = 2f * density)
+                                style = androidx.compose.ui.graphics.drawscope.Stroke(width = 2.5f * density)
                             )
 
                             // Eyes - look suspicious
-                            val eyeOffset = if (viewModel.vx >= 0) 4f * density else 0f
+                            val eyeOffset = if (viewModel.vx >= 0) 3.5f * density else -0.5f * density
                             drawCircle(
-                                color = Color.Black,
+                                color = Color(0xFF1E2024),
                                 radius = 2.5f * density,
-                                center = Offset(px + pw / 4 + eyeOffset, py + ph / 3)
+                                center = Offset(px + pw / 4.5f + eyeOffset, py + ph / 2.8f)
                             )
                             drawCircle(
-                                color = Color.Black,
+                                color = Color(0xFF1E2024),
                                 radius = 2.5f * density,
-                                center = Offset(px + pw * 0.6f + eyeOffset, py + ph / 3)
+                                center = Offset(px + pw * 0.55f + eyeOffset, py + ph / 2.8f)
                             )
                             // Funny tiny dynamic mouth
                             drawLine(
-                                color = Color.Black,
-                                start = Offset(px + pw / 3, py + ph * 0.6f),
-                                end = Offset(px + pw * 0.66f, py + ph * 0.6f),
-                                strokeWidth = 2f * density
+                                color = Color(0xFF1E2024),
+                                start = Offset(px + pw / 3.5f, py + ph * 0.65f),
+                                end = Offset(px + pw * 0.60f, py + ph * 0.65f),
+                                strokeWidth = 2.5f * density
                             )
                         }
                     }
@@ -1335,20 +1473,20 @@ fun SettingsScreen(viewModel: GameViewModel) {
         modifier = Modifier
             .fillMaxSize()
             .background(Color.Black)
-            .padding(16.dp),
+            .padding(24.dp),
         contentAlignment = Alignment.Center
     ) {
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
-            modifier = Modifier.widthIn(max = 500.dp)
+            modifier = Modifier.widthIn(max = 420.dp)
         ) {
             Text(
-                "SETTINGS",
+                "OPTIONS",
                 color = CrimsonPrimary,
                 fontSize = 32.sp,
                 fontWeight = FontWeight.ExtraBold,
                 fontFamily = FontFamily.Monospace,
-                modifier = Modifier.padding(bottom = 32.dp)
+                modifier = Modifier.padding(bottom = 24.dp)
             )
 
             // Name section
@@ -1356,12 +1494,16 @@ fun SettingsScreen(viewModel: GameViewModel) {
                 colors = CardDefaults.cardColors(containerColor = ObsidianSurface),
                 modifier = Modifier
                     .fillMaxWidth()
-                    .border(1.dp, Color.DarkGray, RoundedCornerShape(12.dp))
-                    .padding(16.dp)
+                    .border(1.dp, Color.DarkGray.copy(alpha = 0.5f), RoundedCornerShape(12.dp)),
+                shape = RoundedCornerShape(12.dp)
             ) {
-                Column {
-                    Text("PLAYER REGISTRY", fontSize = 12.sp, color = WarningAmber, fontWeight = FontWeight.Bold)
-                    Spacer(modifier = Modifier.height(12.dp))
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp)
+                ) {
+                    Text("PLAYER REGISTRY", fontSize = 12.sp, color = WarningAmber, fontWeight = FontWeight.Bold, letterSpacing = 0.5.sp)
+                    Spacer(modifier = Modifier.height(10.dp))
 
                     OutlinedTextField(
                         value = inputName,
@@ -1388,16 +1530,19 @@ fun SettingsScreen(viewModel: GameViewModel) {
                 colors = CardDefaults.cardColors(containerColor = ObsidianSurface),
                 modifier = Modifier
                     .fillMaxWidth()
-                    .border(1.dp, Color.DarkGray, RoundedCornerShape(12.dp))
-                    .padding(16.dp)
+                    .border(1.dp, Color.DarkGray.copy(alpha = 0.5f), RoundedCornerShape(12.dp)),
+                shape = RoundedCornerShape(12.dp)
             ) {
                 Row(
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Column {
-                        Text("SOUND AND SYNTH EFFECTS", color = Color.White, fontWeight = FontWeight.Bold)
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text("SOUND EFFECTS", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 15.sp)
+                        Spacer(modifier = Modifier.height(2.dp))
                         Text("Mute all real-time 8-bit sound chimes", color = Color.Gray, fontSize = 11.sp)
                     }
 
@@ -1409,18 +1554,18 @@ fun SettingsScreen(viewModel: GameViewModel) {
                 }
             }
 
-            Spacer(modifier = Modifier.height(48.dp))
+            Spacer(modifier = Modifier.height(36.dp))
 
             Button(
                 onClick = { viewModel.goToMenu() },
                 colors = ButtonDefaults.buttonColors(containerColor = ObsidianSurface),
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(50.dp)
-                    .border(1.dp, Color.Gray, RoundedCornerShape(8.dp)),
-                shape = RoundedCornerShape(8.dp)
+                    .height(52.dp)
+                    .border(1.dp, Color.Gray.copy(alpha = 0.4f), RoundedCornerShape(10.dp)),
+                shape = RoundedCornerShape(10.dp)
             ) {
-                Text("DONE", color = Color.LightGray)
+                Text("DONE", color = Color.LightGray, fontWeight = FontWeight.Bold, fontSize = 15.sp)
             }
         }
     }

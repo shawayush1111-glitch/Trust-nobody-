@@ -20,13 +20,22 @@ import kotlin.math.sin
 object SoundManager {
     private const val TAG = "SoundManager"
     private const val SAMPLE_RATE = 44100
-    private val scope = CoroutineScope(Dispatchers.Default)
+    private val scope = CoroutineScope(Dispatchers.IO)
     private var isMuted = false
     private var bgmJob: Job? = null
     private var appContext: android.content.Context? = null
 
     fun initialize(context: android.content.Context) {
-        appContext = context.applicationContext
+        val app = context.applicationContext
+        appContext = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            try {
+                app.createAttributionContext("audio_tag")
+            } catch (e: Exception) {
+                app
+            }
+        } else {
+            app
+        }
     }
 
     fun setMuted(muted: Boolean) {
@@ -43,6 +52,7 @@ object SoundManager {
     private fun playBuffer(buffer: ShortArray) {
         if (isMuted) return
         scope.launch {
+            var audioTrack: AudioTrack? = null
             try {
                 val minBufferSize = AudioTrack.getMinBufferSize(
                     SAMPLE_RATE,
@@ -51,7 +61,7 @@ object SoundManager {
                 )
                 val bufferSize = maxOf(buffer.size, minBufferSize)
                 
-                val audioTrack = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                audioTrack = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                     val builder = AudioTrack.Builder()
                         .setAudioAttributes(
                             AudioAttributes.Builder()
@@ -68,6 +78,9 @@ object SoundManager {
                         )
                         .setBufferSizeInBytes(bufferSize * 2)
                         .setTransferMode(AudioTrack.MODE_STATIC)
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                        appContext?.let { builder.setContext(it) }
+                    }
                     builder.build()
                 } else {
                     @Suppress("DEPRECATION")
@@ -87,10 +100,21 @@ object SoundManager {
                 // Track release timer based on sound length plus buffer cushion
                 val durationMs = (buffer.size * 1000L) / SAMPLE_RATE
                 delay(durationMs + 200)
-                audioTrack.stop()
-                audioTrack.release()
             } catch (e: Exception) {
-                Log.e(TAG, "Failed playing synth sound: ${e.message}")
+                if (e !is kotlinx.coroutines.CancellationException) {
+                    Log.e(TAG, "Failed playing synth sound: ${e.message}")
+                }
+            } finally {
+                try {
+                    audioTrack?.let {
+                        if (it.playState == AudioTrack.PLAYSTATE_PLAYING) {
+                            it.stop()
+                        }
+                        it.release()
+                    }
+                } catch (t: Throwable) {
+                    // Ignore
+                }
             }
         }
     }
@@ -234,6 +258,7 @@ object SoundManager {
         if (isMuted) return
         stopBackgroundMusic()
         bgmJob = scope.launch {
+            var bgmTrack: AudioTrack? = null
             try {
                 // Generates a constant low-pitch spooky dark drone and bass rhythm
                 val drone = generateTone(1500, 75f, 75f, "sine", 0.2f)
@@ -249,7 +274,7 @@ object SoundManager {
                 )
                 val bufferSize = maxOf(track.size * 2, minSize)
                 
-                val bgmTrack = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                bgmTrack = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                     val builder = AudioTrack.Builder()
                         .setAudioAttributes(
                             AudioAttributes.Builder()
@@ -266,6 +291,9 @@ object SoundManager {
                         )
                         .setBufferSizeInBytes(bufferSize)
                         .setTransferMode(AudioTrack.MODE_STREAM)
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                        appContext?.let { builder.setContext(it) }
+                    }
                     builder.build()
                 } else {
                     @Suppress("DEPRECATION")
@@ -285,13 +313,21 @@ object SoundManager {
                     bgmTrack.write(track, 0, track.size)
                     delay(50) // Tiny delay to allow buffering
                 }
-                
-                try {
-                    bgmTrack.stop()
-                    bgmTrack.release()
-                } catch (e: Exception) {}
             } catch (e: Exception) {
-                Log.e(TAG, "BGM failed: ${e.message}")
+                if (e !is kotlinx.coroutines.CancellationException) {
+                    Log.e(TAG, "BGM failed: ${e.message}")
+                }
+            } finally {
+                try {
+                    bgmTrack?.let {
+                        if (it.playState == AudioTrack.PLAYSTATE_PLAYING) {
+                            it.stop()
+                        }
+                        it.release()
+                    }
+                } catch (t: Throwable) {
+                    // Ignore
+                }
             }
         }
     }

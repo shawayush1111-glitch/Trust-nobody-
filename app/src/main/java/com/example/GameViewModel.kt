@@ -90,16 +90,13 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
     init {
         // Load initial progress
         viewModelScope.launch {
-            dao.getUserProgressFlow().collect { progress ->
-                if (progress != null) {
-                    currentLevelIndex = progress.currentLevel
-                    deathCount = progress.totalDeaths
-                    levelDeaths = progress.currentLevelDeaths
-                    isMuted = progress.isMuted
-                    playerName = progress.playerName
-                    SoundManager.setMuted(isMuted)
-                }
-            }
+            val progress = dao.getUserProgress() ?: UserProgress()
+            currentLevelIndex = progress.currentLevel
+            deathCount = progress.totalDeaths
+            levelDeaths = progress.currentLevelDeaths
+            isMuted = progress.isMuted
+            playerName = progress.playerName
+            SoundManager.setMuted(isMuted)
         }
     }
 
@@ -499,14 +496,16 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
 
     fun proceedToNextLevel() {
         viewModelScope.launch {
+            val progress = dao.getUserProgress() ?: UserProgress()
             currentLevelIndex++
             levelDeaths = 0
             
+            val updatedMaxLevel = maxOf(progress.currentLevel, currentLevelIndex)
+            
             // Save level progression to DB
-            val progress = dao.getUserProgress() ?: UserProgress()
             dao.saveUserProgress(
                 progress.copy(
-                    currentLevel = currentLevelIndex,
+                    currentLevel = updatedMaxLevel,
                     currentLevelDeaths = 0
                 )
             )
